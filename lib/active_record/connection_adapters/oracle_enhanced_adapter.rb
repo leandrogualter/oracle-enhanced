@@ -1211,7 +1211,16 @@ module ActiveRecord
         order_columns = if order_by.is_a?(String)
           order_by.split(',').map { |s| s.strip }.reject(&:blank?)
         else # in latest ActiveRecord versions order_by is already Array
-          order_by
+          # Even though +order_by+ is an Array, in Rails 3.1.x/3.2.x it has not
+          # been split by a comma, which leads to an exception
+          # (Java::JavaSql::SQLSyntaxErrorException: ORA-00905).
+          # This error happens with Rails 3.1.12, JRuby 1.7.24 and Oracle
+          # Enhanced Adapter 1.4.3.
+          if order_by.size == 1
+            order_by.first.split(',').map(&:strip).reject(&:blank?)
+          else
+            order_by
+          end
         end
         order_columns = order_columns.zip((0...order_columns.size).to_a).map do |c, i|
           # remove any ASC/DESC modifiers
