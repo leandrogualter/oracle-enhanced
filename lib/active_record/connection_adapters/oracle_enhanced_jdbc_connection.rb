@@ -7,10 +7,11 @@ begin
   java_version = java.lang.System.getProperty("java.version")
   ojdbc_jar = if java_version =~ /^1.5/
     "ojdbc5.jar"
-  elsif java_version =~ /^1.6/
+  elsif java_version >= '1.6'
+    # Following the oracle website jruby compatilibility with oracle 11g
+    # and java 1.7 or 1.8
+    # http://www.oracle.com/technetwork/articles/dsl/jruby-oracle11g-330825.html
     "ojdbc6.jar"
-  elsif java_version =~ /^1.7/
-    "ojdbc7.jar"
   else
     nil
   end
@@ -88,7 +89,7 @@ module ActiveRecord
             @raw_connection = @raw_connection.innermost_delegate
           elsif @raw_connection.respond_to?(:getUnderlyingConnection)
             @pooled_connection = @raw_connection
-            @raw_connection = @raw_connection.underlying_connection            
+            @raw_connection = @raw_connection.underlying_connection
           end
 
           config[:driver] ||= @raw_connection.meta_data.connection.java_class.name
@@ -287,7 +288,7 @@ module ActiveRecord
             # else
             #   nil
             # end
-            
+
             # Workaround with CallableStatement
             s = @raw_connection.prepareCall("BEGIN #{sql}; END;")
             s.registerOutParameter(1, java.sql.Types::BIGINT)
